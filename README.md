@@ -1,12 +1,50 @@
-# Flask starter app for Web App for Containers
- 
-A simple Flask based python application running in a Docker container. The custom image uses port 5000.  Use the [flask template](https://portal.azure.com/#create/PTVS.flasklinux) in Azure portal to to deploy this app.
+# Jargon Buster Backend - on Azure Web App for Containers
 
-## Customizing the image and Setting up in Azure
-- Customize the docker image in this repo and publish to your docker hub or ACR repository
-- Create a [Web App for containers](https://portal.azure.com/#create/microsoft.appsvclinux)
-- Configure your web app to custom image  
-- Browse your site 
+This backend app runs on Python / Flask. It's the backend to the
+Jargon Buster Frontend Static Web App found here: ...
+
+Architecture Diagram:
+
+
+Here's how to get it running on Azure.
+
+
+# Create a Service Principal
+```bash
+AZURE_SUB_ID=<Your Azure Subscription ID>
+RESOURCE_GROUP=<Your ResourceGroup name, e.g. 'HealthHack'>
+
+az ad sp create-for-rbac -n "JargonBusterBackend" --role contributor \
+   --scopes /subscriptions/$AZURE_SUB_ID/resourceGroups/$RESOURCE_GROUP > ServicePrincipal.json
+
+cat ServicePrincipal.json
+``` 
+
+# Create
+```bash
+#!/bin/bash
+
+# Based on: https://docs.microsoft.com/en-us/azure/app-service/scripts/cli-linux-docker-aspnetcore#sample-script
+
+# Variables
+appName=$1
+appPlanName="${appName}plan"
+resGroupName=$2
+location="WestUS2"
+
+# Create a Resource Group
+az group create –name $resGroupName –location $location
+
+# Create an App Service Plan
+az appservice plan create –name $appPlanName –resource-group $resGroupName –location $location –is-linux –sku B1
+
+# Create a Web App
+az webapp create –name $appName –plan $appPlanName –resource-group $resGroupName –runtime "python|3.8"
+
+# Copy the result of the following command into a browser to see the web app.
+echo http://$appName.azurewebsites.net
+```
+
  
 # Contributing
 
