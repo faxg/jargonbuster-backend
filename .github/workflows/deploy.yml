@@ -1,5 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# This will deploy the project as an Azure Web App for Linux / Python
 
 name: Deploy to Azure Web App
 on:
@@ -31,9 +30,9 @@ jobs:
         # Enter an existing Slot other than the Production slot
         slot-name: production
         # Applies to Web App only: Path to package or folder. *.zip, *.war, *.jar or a folder to deploy
-        package: ./flaskwebapp
+        package: .
         # Applies to Web App Containers only: Specify the fully qualified container image(s) name. For example, 'myregistry.azurecr.io/nginx:latest' or 'python:3.7.2-alpine/'. For multi-container scenario multiple container image names can be provided (multi-line separated)
         # images: 
         
         # Enter the start up command. For ex. dotnet run or dotnet run
-        startup-command: init.sh # optional
+        startup-command: python runserver.py
