@@ -8,16 +8,17 @@ Architecture Diagram:
 
 Here's how to get it running on Azure.
 
+# Create Python env
+python -m venv venv
+source ./venv/Scripts/activate
+pip install flask
+
+pip freeze > requirements.txt
 
 # Create a Service Principal
 ```bash
-AZURE_SUB_ID=<Your Azure Subscription ID>
-RESOURCE_GROUP=<Your ResourceGroup name, e.g. 'HealthHack'>
-
-az ad sp create-for-rbac -n "JargonBusterBackend" --role contributor \
-   --scopes /subscriptions/$AZURE_SUB_ID/resourceGroups/$RESOURCE_GROUP > ServicePrincipal.json
-
-cat ServicePrincipal.json
+# add the output as AZURE_CREDENTIALS secret in GitHub
+$ az ad sp create-for-rbac --name "JargonBusterPrincipal" --sdk-auth
 ``` 
 
 # Create
