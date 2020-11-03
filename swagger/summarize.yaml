@@ -8,6 +8,9 @@ consumes:
   - application/json
 produces:
   - application/json
+
+basePath: "/api"
+
 #security:
   # enable OAuth protection for all REST endpoints
   # (only active if the TOKENINFO_URL environment variable is set)
@@ -15,7 +18,8 @@ produces:
 paths:
   /summarize:
     get:
-      tags: [short_running]
+      tags: 
+        - "summarize"
       operationId: app.get_summary
       summary: Creates a summary from the input text
       parameters:

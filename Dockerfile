@@ -7,6 +7,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 COPY swagger . 
+COPY templates .
+
 EXPOSE 5000
 
 ENTRYPOINT ["python", "app.py"]
