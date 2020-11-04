@@ -8,6 +8,7 @@ RUN pip install -r requirements.txt
 COPY . .
 COPY swagger . 
 COPY templates .
+COPY summarizer .
 
 EXPOSE 5000
 
