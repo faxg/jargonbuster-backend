@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from os import environ
+import tempfile
 import datetime
 import logging
 
@@ -14,12 +15,14 @@ nltk.download("punkt", quiet=True)
 nltk.download("stopwords", quiet=True)
 from nltk.corpus import stopwords
 
+import pdfminer.high_level
+
 
 # Connexion request handling:
 # https://connexion.readthedocs.io/en/latest/request.html
 
 def generate_summary (data):
-    #print (f"{equest.get_data(as_text=True)}")
+    #print (f"{request.get_data(as_text=True)}")
     inputText = data['text']
     summaryText = ""
 
@@ -35,10 +38,6 @@ def generate_summary (data):
     } 
     return response
 
-def get_summary(text):
-    return generate_summary({
-        "text": "Please use POST method"
-    });
 
 def post_summary():
     # see https://flask.palletsprojects.com/en/1.1.x/api/#incoming-request-data
@@ -49,10 +48,25 @@ def post_summary():
 
 
 def post_extract():
-    data = request.json
+    # 1. write temp file to disk
+    f = request.files['file'] # uploaded file (via form / REST client)
+    temp = tempfile.NamedTemporaryFile(prefix="jargonbuster_")
+    extractedText = ""
+    try:        
+        f.save(temp.name)    
+        # 2. use pdfminer to extract plain text
+        # see https://pdfminersix.readthedocs.io/en/latest/reference/highlevel.html#api-extract-text
+        extractedText = pdfminer.high_level.extract_text (temp.name, )
+        # 3. TODO do some basic cleaning (e.g. linebreaks)
+    finally:
+        temp.close()    
+
     response = {
-        "summary": "This is POST extract" 
-    } 
+        "text": extractedText
+    }
+
+
+ 
     return response
 
 

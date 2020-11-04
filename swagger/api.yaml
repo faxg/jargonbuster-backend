@@ -1,4 +1,6 @@
-# Use editor under https://mermade.github.io/openapi-gui/#
+#
+# For a free graphical editor, try https://mermade.github.io/openapi-gui/#
+#
 openapi: 3.0.0
 servers:
   - url: 'http://jargonbusterbackend.azurewebsites.net/api'
@@ -11,50 +13,37 @@ info:
   title: JargonBuster API
   termsOfService: 'http://swagger.io/terms/'
   contact:
-    email: ''
+    name: Jargonbuster Backend
     url: 'https://github.com/faxg/jargonbuster-backend'
   license:
     name: MIT
     url: 'https://opensource.org/licenses/MIT'
 tags:
-  - name: Summarize
-    description: 'Summarize text using LSA (Latent Semantic Analysis). '
   - name: Extract
     description: 'API to extract text from documents (like PDF, images)'
+  - name: Summarize
+    description: 'Summarize text using LSA (Latent Semantic Analysis). '
   - name: Analyze
     description: >-
-      Cognitive analytics on texts. Wrapper around Azure Text Analytics for
-      health (preview). 
+      Cognitive analytics on medical texts. Extracts concepts, entities, key phrases etc...
   - name: Present
     description: >-
       Presentation related functions, e.g. find illustrations, configure Azure
       Immersive Reader 
+
+#
+#
+#
 paths:
+
+  #  
+  # Create summaries from text
+  #
   /summarize:
-    get:
-      summary: Summarizes a (short) text
-      description: Summarize short text with default settings
-      parameters:
-        - name: text
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Input text to summarize
-      operationId: app.get_summary
-      responses:
-        '200':
-          description: 'Summarization successful '
-          content:
-            application/json:
-              schema: {}
-      tags:
-        - Summarize
     post:
       summary: Summarizes a text
       description: >-
-        Summarize text up to 1MB. You can configure the LSA backend with NLTK
-        options.
+        Summarize text up to 1MB.
       parameters:
         - name: language
           in: query
@@ -74,42 +63,39 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          'application/json':
             schema:
               $ref: '#/components/schemas/SummaryRequest'
         description: SummaryRequest containing the text to summarize.
-    summary: Summarize texts
-    description: >-
-      These functions will help summarizing longer texts into a shorter
-      abstract.
-       
+
+  #
+  # Extract text from documents
+  # 
   /extract:
+    summary: Extracts text from documents
+    description: 'Upload a document (PDF, for now) and extract the text from it.'
     post:
-      summary: Extracts text from documents
-      description: >-
-        Upload a document (PDF, Word, Image, ....) and extract the text from it.
-        Does leverage some OCR and form analysis if needed.
-      parameters: []
-      operationId: app.post_extract
-      responses:
-        '200':
-          description: Text extraction successfull
-          content:
-            application/json:
-              schema: {}
       tags:
         - Extract
+      operationId: app.post_extract
       requestBody:
-        required: false
         content:
-          application/json:
-            schema: {}
-        description: Document to extract the text from
-    summary: Extract plain text from various documents
-    description: >-
-      Helps to extract plain text from (binary) documents like PDFs, MS word,
-      images etc. Depending on the input document type, leverages different
-      methods like OCR to extract text.
+          'multipart/form-data':
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+        description: Extract text from a document (PDF for now)
+      responses:
+        '200':
+          description: File uploaded.
+        '400':
+          description: Error during file upload.
+
+
+  # Endpoints for analysis of plain text.
   /analyze:
     post:
       summary: Analyzes medical texts
@@ -127,13 +113,16 @@ paths:
       requestBody:
         required: true
         content:
-          'application/json':
+          application/json:
             schema: {}
         description: 'Text to analyze. '
     summary: Analyze medical jargon text
     description: >-
       This uses Azure Text Analytics for Health to find concepts, terms etc. in
-      medical literature 
+      medical literature
+
+
+# API for getting token etc. for  integration of presentation layer / the frontend
   /getIRToken:
     get:
       summary: Gets a reader token for Azure Immersive Reader
@@ -154,8 +143,6 @@ paths:
     description: >-
       Helper methods to support the frontend with presenting content in a web /
       mobile user interface.
-
-
 components:
   schemas:
     SummaryRequest:
@@ -164,13 +151,12 @@ components:
         text:
           type: string
     ExtractRequest:
-      type: binary
+      type: object
     AnalysisRequest:
       type: object
       properties:
         text:
           type: string
-
   securitySchemes:
     api_key:
       type: apiKey
