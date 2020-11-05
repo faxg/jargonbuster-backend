@@ -4,6 +4,7 @@
 openapi: 3.0.0
 servers:
   - url: 'http://jargonbusterbackend.azurewebsites.net/api'
+    description: ''
 info:
   description: >-
     API for the JargonBuster challenge. Provides a set of APIs to use text
@@ -22,28 +23,20 @@ tags:
   - name: Extract
     description: 'API to extract text from documents (like PDF, images)'
   - name: Summarize
-    description: 'Summarize text using LSA (Latent Semantic Analysis). '
+    description: Summarize text using different auto-summarization algorithms
   - name: Analyze
     description: >-
-      Cognitive analytics on medical texts. Extracts concepts, entities, key phrases etc...
+      Analytics on medical texts. extracts concepts, entities, key phrases
+      etc...
   - name: Present
     description: >-
-      Presentation related functions, e.g. find illustrations, configure Azure
-      Immersive Reader 
-
-#
-#
-#
+      Presentation related functions, e.g. find illustrations and, configure
+      Azure Immersive Reader 
 paths:
-
-  #  
-  # Create summaries from text
-  #
   /summarize:
     post:
       summary: Summarizes a text
-      description: >-
-        Summarize text up to 1MB.
+      description: Summarize text up to 1MB.
       parameters:
         - name: language
           in: query
@@ -63,14 +56,10 @@ paths:
       requestBody:
         required: true
         content:
-          'application/json':
+          application/json:
             schema:
               $ref: '#/components/schemas/SummaryRequest'
         description: SummaryRequest containing the text to summarize.
-
-  #
-  # Extract text from documents
-  # 
   /extract:
     summary: Extracts text from documents
     description: 'Upload a document (PDF, for now) and extract the text from it.'
@@ -80,7 +69,7 @@ paths:
       operationId: app.post_extract
       requestBody:
         content:
-          'multipart/form-data':
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -93,9 +82,7 @@ paths:
           description: File uploaded.
         '400':
           description: Error during file upload.
-
-
-  # Endpoints for analysis of plain text.
+      parameters: []
   /analyze:
     post:
       summary: Analyzes medical texts
@@ -120,9 +107,6 @@ paths:
     description: >-
       This uses Azure Text Analytics for Health to find concepts, terms etc. in
       medical literature
-
-
-# API for getting token etc. for  integration of presentation layer / the frontend
   /getIRToken:
     get:
       summary: Gets a reader token for Azure Immersive Reader
@@ -143,6 +127,31 @@ paths:
     description: >-
       Helper methods to support the frontend with presenting content in a web /
       mobile user interface.
+  /definition:
+    get:
+      summary: Lookup the definition of a medical term 
+      description: >-
+        Looks up a medical term definition in the Merriam-Webster medical dictionary
+      parameters:
+        - name: term
+          in: query
+          required: false
+          schema:
+            type: string
+          description: the (medical) term to look up
+      operationId: app.get_definition
+      responses:
+        '200':
+          description: request ok
+          content:
+            application/json:
+              schema: {}
+      tags:
+        - Present
+    summary: Presentation helpers
+    description: >-
+      Helper methods to support the frontend with presenting content in a web /
+      mobile user interface.
 components:
   schemas:
     SummaryRequest:
@@ -150,8 +159,6 @@ components:
       properties:
         text:
           type: string
-    ExtractRequest:
-      type: object
     AnalysisRequest:
       type: object
       properties:

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-from os import environ
+import os
+from dotenv import load_dotenv
 import tempfile
 import datetime
 import logging
+import requests
+from pprint import pprint
 
-from flask import render_template
-from flask import request
+from flask import Flask, redirect, render_template, request, jsonify
 import connexion
 from connexion import NoContent
 
@@ -16,6 +18,16 @@ nltk.download("stopwords", quiet=True)
 from nltk.corpus import stopwords
 
 import pdfminer.high_level
+
+import re
+from cleantext import clean
+
+
+# load the .env file. 
+# Make sure you create it and add the right keys etc. to run this locally.
+# For cloud runtime, we store the secrets by other means ( make sure to update them as well)
+load_dotenv()
+
 
 
 # Connexion request handling:
@@ -32,9 +44,17 @@ def generate_summary (data):
     summarizer.stop_words = sw
     summaryText =summarizer(inputText, 3)
 
+    summaryHTML = f'' 
+
+    for x in range(len(summaryText)): 
+	    summaryHTML = f'{summaryHTML} <li>{summaryText[x]}</li>' 
+    summaryHTML = f'<ul>{summaryHTML}</ul>' 
+
+
 
     response = {
-        "summary": summaryText 
+        "summary": summaryText,
+        "html": summaryHTML
     } 
     return response
 
@@ -44,22 +64,54 @@ def post_summary():
     return generate_summary (request.json)
 
 
+def get_definition ():
+    apiKey = os.environ.get('MW_API_KEY')
+    term = request.args['term']
+    try:
+        url = f"https://www.dictionaryapi.com/api/v3/references/medical/json/{term}?key={apiKey}"
+
+        resp = requests.get (url)
+        jsonResp = resp.json()
+
+        # For now we only extract the first form and give the short descriptions
+        fl = jsonResp[0]['fl']
+        definitions = jsonResp[0]['shortdef']
+        response = jsonify (term = term, fl = fl, definitions = definitions)
+
+        return response
+    except Exception as e:
+        message = 'Error querying the MW dictionary: ' + resp.text
+        print (message, e)
+        return jsonify(error = message)
+
+
+    
+
 
 
 
 def post_extract():
     # 1. write temp file to disk
     f = request.files['file'] # uploaded file (via form / REST client)
-    temp = tempfile.NamedTemporaryFile(prefix="jargonbuster_")
+    temp = tempfile.NamedTemporaryFile(prefix="jargonbuster_", delete=False)
     extractedText = ""
     try:        
-        f.save(temp.name)    
+        f.save (temp)    
         # 2. use pdfminer to extract plain text
         # see https://pdfminersix.readthedocs.io/en/latest/reference/highlevel.html#api-extract-text
-        extractedText = pdfminer.high_level.extract_text (temp.name, )
-        # 3. TODO do some basic cleaning (e.g. linebreaks)
+        temp.close()
+        extractedText = pdfminer.high_level.extract_text (temp.name)
+        # 3. do some basic cleaning (e.g. linebreaks)
+        extractedText= clean (extractedText,
+            no_line_breaks=True,
+            lang="en")
+        # remove remains from word breaks (like "re- miniscence")
+        extractedText= re.sub(r'([a-z])\- ([a-z])', r'\1\2', extractedText)
+        extractedText= re.sub(r'\.\d+\s+([a-z])+', r'\1', extractedText)
+        
     finally:
-        temp.close()    
+        temp.close()
+        os.unlink(temp.name)
 
     response = {
         "text": extractedText
@@ -82,12 +134,35 @@ def post_analyze(body):
 
 
 
-
+#
+# Get the Immersive Reader token.
+#
 def get_ir_token ():
-    response = {
-        "summary": "This is GET IR token" 
-    } 
-    return response
+    try:
+        headers = { 'content-type': 'application/x-www-form-urlencoded' }
+        data = {
+            'client_id': str(os.environ.get('CLIENT_ID')),
+            'client_secret': str(os.environ.get('CLIENT_SECRET')),
+            'resource': 'https://cognitiveservices.azure.com/',
+            'grant_type': 'client_credentials'
+        }
+        print (data)
+
+        resp = requests.post('https://login.windows.net/' + str(os.environ.get('TENANT_ID')) + '/oauth2/token', data=data, headers=headers)
+        jsonResp = resp.json()
+        
+        if ('access_token' not in jsonResp):
+            print(jsonResp)
+            raise Exception('AAD Authentication error')
+
+        token = jsonResp['access_token']
+        subdomain = str(os.environ.get('SUBDOMAIN'))
+
+        return jsonify(token = token, subdomain = subdomain)
+    except Exception as e:
+        message = 'Unable to acquire Azure AD token. Check the debugger for more information.'
+        print(message, e)
+        return jsonify(error = message)
 
 
 
@@ -103,6 +178,9 @@ app.add_api('api.yaml')
 def home():
     return render_template('home.html')
 
+@app.route('/reader')
+def reader():
+    return render_template('reader.html')
 
 
 
