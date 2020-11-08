@@ -18,6 +18,9 @@ nltk.download("stopwords", quiet=True)
 from nltk.corpus import stopwords
 
 import pdfminer.high_level
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
+
 
 import re
 from cleantext import clean
@@ -95,10 +98,15 @@ def post_extract():
     f = request.files['file'] # uploaded file (via form / REST client)
     temp = tempfile.NamedTemporaryFile(prefix="jargonbuster_", delete=False)
     extractedText = ""
+    info = ""
     try:        
         f.save (temp)    
         # 2. use pdfminer to extract plain text
         # see https://pdfminersix.readthedocs.io/en/latest/reference/highlevel.html#api-extract-text
+        parser = PDFParser(temp)
+        doc = PDFDocument(parser)
+        info  = { key: val.decode() for key, val in doc.info[0].items() }
+        print (info)
         temp.close()
         extractedText = pdfminer.high_level.extract_text (temp.name)
         # 3. do some basic cleaning (e.g. linebreaks)
@@ -113,9 +121,7 @@ def post_extract():
         temp.close()
         os.unlink(temp.name)
 
-    response = {
-        "text": extractedText
-    }
+    response = jsonify (text = extractedText, info= info)
 
 
  
@@ -124,13 +130,55 @@ def post_extract():
 
 
 
-def post_analyze(body):
+def post_analyze():
     data = request.json
+    
+    fulltext = "".join (data['summary'])
 
-    response = {
-        "summary": "This is POST analyze: " + data['text']
-    } 
-    return response
+    endpoint = os.environ.get('TA_ENDPOINT')
+
+    # curl -X POST 'http://<serverURL>:5000/text/analytics/v3.2-preview.1/entities/health' --header 'Content-Type: application/json' --header 'accept: application/json' --data-binary @example.json
+
+
+    try:
+        url = f"{endpoint}/text/analytics/v3.2-preview.1/entities/health"
+        documents = { "documents": [
+            {"language": "en",
+            "id": "1",
+            "text": fulltext
+            }]
+        }
+        #payload = jsonify(documents)
+        #print (payload)
+
+        resp = requests.post (url, 
+            headers = {},
+            json=documents)
+        print (resp.text)
+
+        if (resp.ok):
+            print ("OK: ")
+            raw = resp.json()['documents'][0]
+            #category = Diagnosis
+            diagnosis = next((sub for sub in raw['entities'] if sub['category'] == 'Diagnosis'), None) 
+            # category=ExaminationName
+            examinations = next((sub for sub in raw['entities'] if sub['category'] == 'ExaminationName'), None)
+            # catgeory=TreatmentName
+            treatments = next((sub for sub in raw['entities'] if sub['category'] == 'TreatmentName'), None)
+
+            #jsonResp['entities']
+
+            jsonResp = jsonify (diagnosis, examinations, treatments)
+
+        else:
+            #print (resp.status_code, resp.reason)
+            jsonResp = jsonify (error = resp.reason)
+
+        return jsonResp
+    except Exception as e:
+        message = f"Error calling Text Analytics for health: {str(e)}"  
+        return jsonify(error = message)
+
 
 
 

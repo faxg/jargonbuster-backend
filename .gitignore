@@ -3,6 +3,7 @@
 
 .env
 venv
+local/provisionTA*
 
 # User-specific files
 *.suo
