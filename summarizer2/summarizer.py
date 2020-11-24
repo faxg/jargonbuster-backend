@@ -23,6 +23,7 @@ def createSummary (text, language="english", num_sentences=5, method="lexrank"):
     tokenizer = Tokenizer(language)
     parser = PlaintextParser.from_string(text, tokenizer)
     
+    # word stemming
     stemmer = Stemmer(language)
 
     summarizer = LexRankSummarizer(stemmer)
