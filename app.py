@@ -11,11 +11,13 @@ from flask import Flask, redirect, render_template, request, jsonify
 import connexion
 from connexion import NoContent
 
-from summarizer.lsa_summarizer import LsaSummarizer
-import nltk
-nltk.download("punkt", quiet=True)
-nltk.download("stopwords", quiet=True)
-from nltk.corpus import stopwords
+from summarizer2 import summarizer 
+
+#from summarizer.lsa_summarizer import LsaSummarizer
+#import nltk
+#nltk.download("punkt", quiet=True)
+#nltk.download("stopwords", quiet=True)
+#from nltk.corpus import stopwords
 
 import pdfminer.high_level
 from pdfminer.pdfparser import PDFParser
@@ -41,12 +43,16 @@ def generate_summary (data):
     inputText = data['text']
     summaryText = ""
 
-    summarizer = LsaSummarizer()
-    sw = stopwords.words('english')
+    #summarizer = LsaSummarizer()
+    #sw = stopwords.words('english')
 
-    summarizer.stop_words = sw
-    summaryText =summarizer(inputText, 3)
-
+    #summarizer.stop_words = sw
+    #summaryText = #summarizer(inputText, 3)
+    print ("======= Start Summary creation ========== ")
+    summaryText = summarizer.createSummary (inputText)
+    print (summaryText)
+    print ("======= End Summary creation ========== ")
+    
     summaryHTML = f'' 
 
     for x in range(len(summaryText)): 
