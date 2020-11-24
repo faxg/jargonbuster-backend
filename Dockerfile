@@ -11,6 +11,8 @@ COPY . .
 COPY swagger . 
 COPY templates .
 COPY summarizer .
+COPY summarizer2 .
+
 
 EXPOSE 5000
 
