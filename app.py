@@ -13,12 +13,9 @@ import connexion
 from connexion import NoContent
 
 from summarizer2 import summarizer 
+from extractor.pdfminer_extractor import PDFMinerExtractor
+from extractor.tika_extractor import TikaExtractor
 
-
-
-import pdfminer.high_level
-from pdfminer.pdfparser import PDFParser
-from pdfminer.pdfdocument import PDFDocument
 
 
 import re
@@ -54,11 +51,10 @@ def find_best (sentences, max_num):
 def generate_summary (data: dict):
     #print (f"{request.get_data(as_text=True)}")
     inputText = data.get('text', '')
-
     method = data.get('method','lexrank')
     language = data.get('language',  'english')
     
-    # generate double the amount of summary sentences, then 
+    # generate double the amount of summary sentences, then reduce with find_best() 
     num_sentences = data.get ('num_sentences', 3) * 2 
 
     summaryText = ""
@@ -74,8 +70,8 @@ def generate_summary (data: dict):
     print (summaryText)
     print ("======= End Summary creation ========== ")
     
+    # For client convenience, generate a HTML fragment (<ul>) with the summary sentences.
     summaryHTML = f'' 
-
     for x in range(len(summaryText)): 
 	    summaryHTML = f'{summaryHTML} <li>{summaryText[x]}</li>' 
     summaryHTML = f'<ul>{summaryHTML}</ul>' 
@@ -115,9 +111,6 @@ def get_definition ():
         return jsonify(error = message)
 
 
-    
-
-
 
 
 def post_extract():
@@ -128,14 +121,11 @@ def post_extract():
     info = ""
     try:        
         f.save (temp)    
-        # 2. use pdfminer to extract plain text
-        # see https://pdfminersix.readthedocs.io/en/latest/reference/highlevel.html#api-extract-text
-        parser = PDFParser(temp)
-        doc = PDFDocument(parser)
-        info  = { key: val.decode() for key, val in doc.info[0].items() }
-        print (info)
+        extractor = TikaExtractor(temp)  #PDFMinerExtractor(temp)
         temp.close()
-        extractedText = pdfminer.high_level.extract_text (temp.name)
+        extractedText = extractor.extractText () 
+        info = extractor.extractInfo()
+
         # 3. do some basic cleaning (e.g. linebreaks)
         extractedText= clean (extractedText,
             no_line_breaks=True,
