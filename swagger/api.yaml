@@ -159,11 +159,19 @@ components:
       properties:
         text:
           type: string
+        language:
+          type: string
+        method: 
+          type: string
+        num_sentences:
+          type: number
+
     AnalysisRequest:
       type: object
       properties:
         text:
           type: string
+          
   securitySchemes:
     api_key:
       type: apiKey

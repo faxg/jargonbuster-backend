@@ -13,11 +13,7 @@ from connexion import NoContent
 
 from summarizer2 import summarizer 
 
-#from summarizer.lsa_summarizer import LsaSummarizer
-#import nltk
-#nltk.download("punkt", quiet=True)
-#nltk.download("stopwords", quiet=True)
-#from nltk.corpus import stopwords
+
 
 import pdfminer.high_level
 from pdfminer.pdfparser import PDFParser
@@ -38,19 +34,18 @@ load_dotenv()
 # Connexion request handling:
 # https://connexion.readthedocs.io/en/latest/request.html
 
-def generate_summary (data):
+def generate_summary (data: dict):
     #print (f"{request.get_data(as_text=True)}")
-    inputText = data['text']
+    inputText = data.get('text', '')
+
+    method = data.get('method','lsa')
+    language = data.get('language',  'english')
+    num_sentences = data.get ('num_sentences', 3)
+
     summaryText = ""
-
-    #summarizer = LsaSummarizer()
-    #sw = stopwords.words('english')
-
-    #summarizer.stop_words = sw
-    #summaryText = #summarizer(inputText, 3)
     print ("======= Start Summary creation ========== ")
-    summaryText = summarizer.createSummary (inputText)
-    print (summaryText)
+    summaryText = summarizer.createSummary (inputText,language = language,num_sentences= num_sentences,method = method)
+    #print (summaryText)
     print ("======= End Summary creation ========== ")
     
     summaryHTML = f'' 
