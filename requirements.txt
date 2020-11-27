@@ -1,5 +1,6 @@
 aniso8601==8.0.0
 attrs==20.2.0
+autocorrect==2.2.2
 azure-ai-textanalytics==5.1.0b2
 azure-common==1.1.25
 azure-core==1.8.2

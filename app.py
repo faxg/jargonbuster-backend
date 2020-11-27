@@ -20,6 +20,7 @@ from extractor.tika_extractor import TikaExtractor
 
 import re
 from cleantext import clean
+from autocorrect import Speller 
 
 
 # load the .env file. 
@@ -36,8 +37,8 @@ load_dotenv()
 # 
 def find_best (sentences, max_num):
     best  = sentences.copy()
-    best.sort (key=len)
-    best.reverse() # prioritize longer sentences
+    #best.sort (key=len)
+    #best.reverse() # prioritize longer sentences
 
     # todo prioritize sentences closer to beginning / end of document
     # todo ...
@@ -126,13 +127,18 @@ def post_extract():
         extractedText = extractor.extractText () 
         info = extractor.extractInfo()
 
-        # 3. do some basic cleaning (e.g. linebreaks)
+        # 3. denoise: do some basic cleaning (e.g. linebreaks)
         extractedText= clean (extractedText,
             no_line_breaks=True,
             lang="en")
         # remove remains from word breaks (like "re- miniscence")
         extractedText= re.sub(r'([a-z])\- ([a-z])', r'\1\2', extractedText)
         extractedText= re.sub(r'\.\d+\s+([a-z])+', r'\1', extractedText)
+        extractedText = re.sub(r'\[[^]]*\]', r'', extractedText)
+        #extractedText = re.sub(r'https?:\/\/.\S+', r'', extractedText)
+        # use auto correct
+        #spell = Speller (lang="en")
+        #extractedText = spell(extractedText)
         
     finally:
         temp.close()
