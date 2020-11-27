@@ -17,7 +17,7 @@ from sumy.utils import get_stop_words
 
 
 
-def createSummary (text, language="english", num_sentences=3, method="lsa"):
+def createSummary (text, language="english", num_sentences=3, method="lexrank"):
     #LANGUAGE = "english"
     #SENTENCES_COUNT = 5
     # url = "https://en.wikipedia.org/wiki/Automatic_summarization"

@@ -38,7 +38,7 @@ def generate_summary (data: dict):
     #print (f"{request.get_data(as_text=True)}")
     inputText = data.get('text', '')
 
-    method = data.get('method','lsa')
+    method = data.get('method','lexrank')
     language = data.get('language',  'english')
     num_sentences = data.get ('num_sentences', 3)
 
