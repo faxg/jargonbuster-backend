@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import tempfile
 import datetime
 import logging
+from numpy.core.records import array
 import requests
 from pprint import pprint
 
@@ -34,18 +35,43 @@ load_dotenv()
 # Connexion request handling:
 # https://connexion.readthedocs.io/en/latest/request.html
 
+# Custom ranking of "best ranked" summary sentences.
+# 
+def find_best (sentences, max_num):
+    best  = sentences.copy()
+    best.sort (key=len)
+    best.reverse() # prioritize longer sentences
+
+    # todo prioritize sentences closer to beginning / end of document
+    # todo ...
+
+    # return top "max_num" sentences.
+    best = best [:max_num]
+
+    return best
+
+
 def generate_summary (data: dict):
     #print (f"{request.get_data(as_text=True)}")
     inputText = data.get('text', '')
 
     method = data.get('method','lexrank')
     language = data.get('language',  'english')
-    num_sentences = data.get ('num_sentences', 3)
+    
+    # generate double the amount of summary sentences, then 
+    num_sentences = data.get ('num_sentences', 3) * 2 
 
     summaryText = ""
     print ("======= Start Summary creation ========== ")
-    summaryText = summarizer.createSummary (inputText,language = language,num_sentences= num_sentences,method = method)
-    #print (summaryText)
+    summaryText = summarizer.createSummary (inputText, \
+        language = language, \
+        num_sentences= num_sentences, \
+        method = method)
+
+    # custom rank & reduce to requested number of sentences 
+    summaryText = find_best (summaryText, round(num_sentences / 2))
+
+    print (summaryText)
     print ("======= End Summary creation ========== ")
     
     summaryHTML = f'' 
